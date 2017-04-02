@@ -10,7 +10,7 @@ const async = require('async');
 
 const REST_PORT = (process.env.PORT || 5000);
 const APIAI_ACCESS_TOKEN = process.env.APIAI_ACCESS_TOKEN;
-const APIAI_LANG = process.env.APIAI_LANG || 'en';
+const APIAI_LANG = process.env.APIAI_LANG || 'es';
 const FB_VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN;
 const FB_PAGE_ACCESS_TOKEN = process.env.FB_PAGE_ACCESS_TOKEN;
 const FB_TEXT_LIMIT = 640;
@@ -244,9 +244,40 @@ class FacebookBot {
         return null;
 
     }
-
+    
+    getFBUserInfo(userId) {
+        return new Promise((resolve, reject) => {
+            request({
+                method: 'GET',
+                uri: "https://graph.facebook.com/v2.6/" + userId + "?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=" + FB_PAGE_ACCESS_TOKEN
+                }, (error, response) => {
+                if (error) {
+                    console.error('Error while getFBUserInfo: ', error);
+                    reject(error);
+                } else if (response.body.error) {
+                    console.error('Error on getFBUserInfo: ', response.body.error);
+                    reject(new Error(response.body.error));
+                }
+                resolve(response.body);
+            });
+        });
+    
+    }
+    
+    
     processEvent(event) {
         const sender = event.sender.id.toString();
+        this.getFBUserInfo(sender)
+                .then(user => this.processEventForUser(event, sender, JSON.parse(user)))
+                .catch(err => {
+                    console.log(err);
+                      });
+        
+    }
+
+    processEventForUser(event, sender, user) {      
+        console.log("processing event for", user);
+      
         const text = this.getEventText(event);
 
         if (text) {
@@ -257,18 +288,32 @@ class FacebookBot {
             }
 
             console.log("Text", text);
-            userInfoRequest(sender);
+            console.log("Sender", sender);
+
             //send user's text to api.ai service
             let apiaiRequest = this.apiAiService.textRequest(text,
                 {
                     sessionId: this.sessionIds.get(sender),
+                    contexts: [
+                        {
+                            name: "generic",
+                            parameters: {
+                                facebook_first_name: this.isDefined(user.first_name)?user.first_name:" ",
+                                facebook_last_name: this.isDefined(user.last_name)?user.last_name:" ",
+                                facebook_profile_pic: this.isDefined(user.profile_pic)?user.profile_pic:" ",
+                                facebook_gender: this.isDefined(user.gender)?user.gender:" ",
+                                facebook_locale: this.isDefined(user.locale)?user.locale:" "                                
+                            }
+                        }
+                    ],
                     originalRequest: {
                         data: event,
                         source: "facebook"
                     }
                 });
-            //get response from api.ai
-            apiaiRequest.on('response', (response) => {
+                
+             //get response from api.ai
+             apiaiRequest.on('response', (response) => {
                 if (this.isDefined(response.result) && this.isDefined(response.result.fulfillment)) {
                     let responseText = response.result.fulfillment.speech;
                     let responseData = response.result.fulfillment.data;
@@ -293,8 +338,9 @@ class FacebookBot {
             });
 
             apiaiRequest.on('error', (error) => console.error(error));
-            apiaiRequest.end();
+            apiaiRequest.end(); 
         }
+         
     }
 
     splitResponse(str) {
@@ -413,20 +459,7 @@ class FacebookBot {
         });
     }
     
-    userInfoRequest(userId) {
-        request({
-            method: 'GET',
-            uri: "https://graph.facebook.com/v2.6/" + userId + "?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token=" + FB_PAGE_ACCESS_TOKEN
-          },
-          function (error, response) {
-            if (error) {
-                console.error('Error while userInfoRequest: ', error);
-            } else {
-                console.log('userInfoRequest result: ', response.body);
-            }
-        })
-     }
-
+    
 }
 
 
@@ -450,8 +483,9 @@ app.get('/webhook/', (req, res) => {
 
 app.post('/webhook/', (req, res) => {
     try {
+        console.log('webhook post: ', req.body);
         const data = JSONbig.parse(req.body);
-
+    
         if (data.entry) {
             let entries = data.entry;
             entries.forEach((entry) => {
@@ -465,6 +499,22 @@ app.post('/webhook/', (req, res) => {
                     });
                 }
             });
+        } else if (data.result) {
+            console.log('actionIncomplete', data.result.actionIncomplete);
+            if (!data.result.actionIncomplete) {
+                const sender = data.originalRequest.data.sender.id;
+                console.log('sender',  sender);
+
+                if (sender) {
+                    facebookBot.sleep(2000); // simulate call to rest server
+                    const party = data.result.parameters.PartyNumber;
+                    const time = data.result.parameters.Time;
+                    const date = data.result.parameters.Date;
+                    const message = "Listo, tenes una reserva para " + date + " a las " + time + " para " + party + " personas";
+                    console.log('message',  message);
+                    facebookBot.doTextResponse(sender, message); 
+                }      
+            }    
         }
 
         return res.status(200).json({
