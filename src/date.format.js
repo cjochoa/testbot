@@ -139,15 +139,6 @@ Date.prototype.format = function (mask, utc) {
 	return dateFormat(this, mask, utc);
 };
 
-exports.getPrintableDate = function(date, time, locale) {
-    const unix_timestamp = Date.parse(date + "T" + time);
-    if (isNaN(unix_timestamp)==false) { // valid date
-        var d = new Date(unix_timestamp);
-        return d.format("dddd dd") + " a las " + d.format("H", true) + " hs." 
-    } else {
-        return  date + " a las " + time + " hs."   
-    }    
-};
 
 exports.getDate = function(date, time) {
     const unix_timestamp = Date.parse(date + "T" + time);
