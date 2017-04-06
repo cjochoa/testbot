@@ -513,8 +513,8 @@ app.post('/webhook/', (req, res) => {
                     const time = data.result.parameters.Time;
                     console.log('time', time);
                     const datetime = df.getDate(date, time);
-                    const printableMinutes = datetime.getMinutes()>0? datetime.format("MM", true) : "";
-                    const printableDate = datetime.format("dddd dd") + " a las " + datetime.format("H", true) + printableMinutes + " hs." 
+                    const printableMinutes = datetime.getMinutes()>0? ":"datetime.format("MM", true) : "";
+                    const printableDate = datetime.format("dddd d") + " a las " + datetime.format("H", true) + printableMinutes + " hs." 
                     console.log('printable', printableDate);
                     console.log('date for server', datetime.format("isoDateTime", true));
                     const message = "Listo, tenes una reserva para el " + printableDate + " para " + party + " personas";
