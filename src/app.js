@@ -508,7 +508,7 @@ app.post('/webhook/', (req, res) => {
 
                 if (sender) {
                     facebookBot.sleep(2000); // simulate call to rest server
-                    const party = data.result.parameters.PartyNumber;
+                    const party = data.result.parameters.Party;
                     const date = data.result.parameters.Date;
                     const time = data.result.parameters.Time;
                     console.log('time', time);
