@@ -159,9 +159,9 @@ exports.getDate = function(date, time) {
            case "esta":
            case "esta noche":
                const d = new Date(); // today
-               const t = new Date(d.format("isoDate") + "T" + time)
+               const t = new Date(d.format("isoDate") + "T" + time);
                return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 
-                               t.d.getUTCHours(), t.getMinutes(), t.getSeconds()); 
+                               t.getHours(), t.getMinutes(), t.getSeconds()); 
        }      
     }    
 };
