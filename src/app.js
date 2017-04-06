@@ -511,9 +511,11 @@ app.post('/webhook/', (req, res) => {
                     const party = data.result.parameters.PartyNumber;
                     const date = data.result.parameters.Date;
                     const time = data.result.parameters.Time;
-                    console.log('printable', df.getPrintableDate(date, time));
-                    console.log('date for server', df.getDate(date,time).format("isoDateTime", true));
-                    const message = "Listo, tenes una reserva para el " + df.getPrintableDate(date, time) + " para " + party + " personas";
+                    const datetime = df.getDate(date, time);
+                    const printableDate = datetime.format("dddd dd") + " a las " + datetime.format("H", true) + " hs." 
+                    console.log('printable', printableDate);
+                    console.log('date for server', datetime.format("isoDateTime", true));
+                    const message = "Listo, tenes una reserva para el " + printableDate + " para " + party + " personas";
                     console.log('message',  message);
                     facebookBot.doTextResponse(sender, message); 
                 }      
