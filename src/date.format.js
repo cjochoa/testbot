@@ -156,6 +156,7 @@ exports.getDate = function(date, time) {
     } else {
        switch(date) {
            case "noche":
+           case "esta":
            case "esta noche":
                const d = new Date(); // today
                const t = new Date(d.format("isoDate") + "T" + time)
