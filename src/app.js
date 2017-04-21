@@ -7,6 +7,7 @@ const uuid = require('node-uuid');
 const request = require('request');
 const JSONbig = require('json-bigint');
 const async = require('async');
+const df = require("./date.format.js");
 
 const REST_PORT = (process.env.PORT || 5000);
 const APIAI_ACCESS_TOKEN = process.env.APIAI_ACCESS_TOKEN;
@@ -507,10 +508,16 @@ app.post('/webhook/', (req, res) => {
 
                 if (sender) {
                     facebookBot.sleep(2000); // simulate call to rest server
-                    const party = data.result.parameters.PartyNumber;
-                    const time = data.result.parameters.Time;
+                    const party = data.result.parameters.Party;
                     const date = data.result.parameters.Date;
-                    const message = "Listo, tenes una reserva para " + date + " a las " + time + " para " + party + " personas";
+                    const time = data.result.parameters.Time;
+                    console.log('time', time);
+                    const datetime = df.getDate(date, time);
+                    const printableMinutes = datetime.getMinutes()>0? ":" + datetime.format("MM", true) : "";
+                    const printableDate = datetime.format("dddd d") + " a las " + datetime.format("H", true) + printableMinutes + " hs." 
+                    console.log('printable', printableDate);
+                    console.log('date for server', datetime.format("isoDateTime", true));
+                    const message = "Listo, tenes una reserva para el " + printableDate + " para " + party + " personas";
                     console.log('message',  message);
                     facebookBot.doTextResponse(sender, message); 
                 }      
